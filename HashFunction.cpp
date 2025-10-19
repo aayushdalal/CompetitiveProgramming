@@ -75,7 +75,16 @@ void solve(){
 int32_t main()
 {
     fastio;
-
+    // to compile the cpp file : g++ test4.cpp -o test4.exe   , or if you only do g++ test4.cpp    so it create a.exe by default
+    //   to run the compiled file : ./test4    or    ./a  if you run default compile without naming   , to be safe do ./test4.exe 
+    // to see content of any file :  cat output.txt    where output.txt is the file name which we want to see content of
+    #ifndef ONLINE_JUDGE
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    #endif
+    // g++ test4.cpp
+    // ./a
+    // cat output.txt
     int tc = 1;
     cin >> tc;
     while (tc--)
