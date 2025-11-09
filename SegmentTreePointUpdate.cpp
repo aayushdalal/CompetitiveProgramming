@@ -15,99 +15,65 @@ static const auto harsh = []()
     cout.tie(nullptr);
     return 0;
 }();
-
-// --- Simple and reliable custom hash for unordered_map/unordered_set ---
-struct SimpleHash {
-    size_t operator()(long long x) const {
-        x ^= x >> 16;
-        x *= 31;
-        return x;
-    }
-};
-// Usage example: unordered_map<int,int,SimpleHash> mp;
 vector<int>SegmentTree;
-long long merge(long long a,long long b){
-    return a+b;
+vector<int>v;
+int merge(int a,int b){
+    return min(a,b);// for query asking minimum, for sum return a+b
 }
-void build(int l,int r,int index){// l ,r denotes the sum
-
-}
-void update(int l,int r,int index,int pos){
-    if(l>pos or r<pos)return ; //always write this at top else if l==r and even its not in range we will update segment tree[index] which will cause so many problems
+void buildtree(int l,int r,int index){
     if(l==r){
-        SegmentTree[index]++;
+        SegmentTree[index]=v[l];
         return;
     }
     int mid=(l+r)/2;
-    update(l,mid,2*index,pos);
-    update(mid+1,r,2*index+1,pos);
+    buildtree(l,mid,2*index);
+    buildtree(mid+1,r,2*index+1);
     SegmentTree[index]=merge(SegmentTree[2*index],SegmentTree[2*index+1]);
+    return; 
 }
-// so either return early or use below code, call the recrusive only when its in range
-
-// void update(int l,int r,int index,int pos){
-//     if(l==r){
-//         SegmentTree[index]++;
-//         return;
-//     }
-//     if(l>pos or r<pos)return ;
-//     int mid=(l+r)/2;
-//     if (pos <= mid) {
-//         // Position is in the left child's range
-//         update(l, mid, 2 * index, pos);
-//     } else {
-//         // Position is in the right child's range
-//         update(mid + 1, r, 2 * index + 1, pos);
-//     }
-//     SegmentTree[index]=merge(SegmentTree[2*index],SegmentTree[2*index+1]);
-// }
-long long query(int l,int r,int index,int ql,int qr){
-    if(ql<=l and qr>=r){
-        return SegmentTree[index];
+void update(int l,int r,int index,int pos,int val){
+    if(l==r){//it is guranted that when this condition comes we have pos==l==r
+        SegmentTree[index]=val;
+        return;
     }
-    if(ql>r or qr<l)return 0;
-
     int mid=(l+r)/2;
-    int a=query(l,mid,2*index,ql,qr);
-    int b=query(mid+1,r,2*index+1,ql,qr);
-    return merge(a,b);
-    // SegmentTree[index]=merge(SegmentTree[2*index],SegmentTree[2*index+1]);
+    if(pos<=mid){//go left ,equal to here is necessary because we have range 1 to mid and pos==mid so its in left 
+        update(l,mid,2*index, pos, val);
+    }
+    else{ //else go right
+        update(mid+1,r,2*index+1,pos,val);
+    }
+    SegmentTree[index]=merge(SegmentTree[2*index],SegmentTree[2*index+1]);// simple update the path from which we came
 }
-long long countMajoritySubarrays(vector<int>& nums, int target) {
-    for(int &a:nums){
-        if(a==target)a=1;
-        else a=-1;
+int query(int l,int r,int index,int ql,int qr){
+    if(ql<=l and r<=qr){
+        return SegmentTree[index];//return the complete segment sum
     }
-    for(int i=1;i<nums.size();i++){
-        nums[i]+=nums[i-1];//prefixwsum
-    }
-    int n=nums.size();// max possible sum possible when all elements equal to target, so our range of elements is 0 to 2*n+1, because we can have -n sum also
-    SegmentTree.assign(4*(2*n+1)+1,0);
-    //initially only when sum=0 is set to 1 ,so index at segment tree at 0+n= n the leaf is 1
-    // SegmentTree[n]=1;//l==n r==n, that is prefixsum=0
-    update(0,2*n,1,n);//use update function never do segment tree[n], here we are not updating nth index of segment tree, we are updating the loigcal range of prefixusm=0 ,range is -n to n so we shift by n its 0 to 2*n so we update at nth value(pos) not literally the nth index of segment tree
-    long long ans=0;
-    for(int i=0;i<n;i++){
-        ans+=query(0,2*n,1,0,n+nums[i]-1);// find the count of prefixsum in range 0 to n+nums[i]-1
-        update(0,2*n,1,n+nums[i]);// update the freqcount of curr prefixsum , that is at n+nums[i] index
-    }
-    return ans;
-
+    if(ql>r or qr<l)return 1e18;// no sum will exsist in this range, return the default value according to need , is asked min query instead of sum query then dont return 0 but return 1e18
+    int mid=(l+r)/2;
+    int a=query(l,mid,2*index,ql,qr);//left childt at 2*index
+    int b=query(mid+1,r,2*index+1,ql,qr);//right child at 2*index +1
+    return merge(a,b);// its the min of a,b, min of a range 
 }
-
-
 void solve(){
-    
+    int n;
+    cin>>n;
+    v.resize(n);
+    for(int i=0;i<n;i++)cin>>v[i];
+    SegmentTree.assign(4*n,0);//segment tree array, dont do resize do assing
+    buildtree(0,n-1,1);// pass l to r and tree index ,  index starts at 0
+    int i,x;
+    cin>>i>>x;
+    update(0,n-1,1,i,x);// 0 ,n-1 is the starting range , 1 is the root index these three will always remain same, then we have index to update and the value to be update with
+    int ql,qr;
+    cin>>ql>>qr;
+    cout<<query(0,n-1,1,ql,qr);
 }
 
 int32_t main()
 {
     fastio;
 
-//#ifndef ONLINE_JUDGE
-//freopen("input.txt", "r", stdin);
-//freopen("output.txt", "w", stdout);
-//#endif
     int tc = 1;
     cin >> tc;
     while (tc--)
